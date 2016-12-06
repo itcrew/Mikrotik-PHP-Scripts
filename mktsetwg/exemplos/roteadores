@@ -1,0 +1,5 @@
+# Arquivo com os dados das RBs que devem ser configuradas
+#Adicione os dados de cada roteador em 1 linha com IP, usuario e senha separados por espaço
+192.168.0.1 user password
+192.168.0.2 user password
+192.168.0.3 user password

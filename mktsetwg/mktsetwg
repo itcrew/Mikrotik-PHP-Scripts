@@ -1,0 +1,150 @@
+#!/usr/bin/php -q
+<?php
+
+require_once "../api/routeros_api.php";
+
+function mostrarAjuda() {
+
+	echo "\n";
+	echo "Configura o Walled Garden do Mikrotik \n\n";
+
+	echo "-r arquivo_roteadores     Arquivo com a lista de RBs mikrotik que devem ser configuradas. \n";
+	echo "                          Cada linha do arquivo deve ter ip, usuario e senha separados por espaço. \n\n";
+	echo "-h arquivo_hosts          Arquivo com a lista de hosts para configurar no Walled Garden. \n";
+	echo "                          Cada linha deve ter um host. \n\n";
+	echo "-v                        Ativa modo mais verboso ( para debug ) \n\n";
+
+	echo "\n";
+}
+
+function limparWalledGarden( $api ) {
+
+	$comm = $api->comm("/ip/hotspot/walled-garden/print", array());
+
+     	$numbers = "";
+
+     	foreach( $comm as $linha ) {
+
+        	$numbers .= ( $linha[".id"] . "," );
+     	}
+
+      	$comm = $api->comm("/ip/hotspot/walled-garden/remove", array(
+        	"numbers"      => $numbers
+     	));
+
+     	if( !empty( $comm["!trap"][0]["message"] ) ) {
+
+      		return false;
+        }
+	
+	return true;
+}
+
+function addHostWalledGarden( $api, $hosts ) {
+
+	foreach( $hosts as $host ) {
+
+	 	$comm = $api->comm("/ip/hotspot/walled-garden/add", array(
+               		"dst-host" => $host
+               	));
+
+                if( !empty( $comm["!trap"][0]["message"] ) ) {
+
+               		return false;
+            	}
+        }
+
+	return true;
+}
+
+function formatarArquivoRoteadores( $arquivo ) {
+
+	$roteadores = array();
+
+	foreach( $arquivo as $linha ) {
+		
+		$linha = trim( $linha );
+		
+		$linha = preg_replace("/\s{2,}/", " ", $linha );	
+	
+		if( strlen($linha) <= 0 || $linha[0] == "#" )
+			continue;
+
+		$dados = explode( " ", $linha );
+
+		if( count( $dados ) != 3 || 
+			filter_var( $dados[0], FILTER_VALIDATE_IP ) === false ) {
+		
+			return array();
+		}
+
+		$roteadores[] = array( "ip" => trim($dados[0]), "usuario" => trim( $dados[1] ), "senha" =>trim( $dados[2] ) );
+	}
+
+	return $roteadores;
+}
+
+function formatarArquivoHosts( $arquivo ) {
+
+	$hosts = array();
+
+	foreach( $arquivo as $linha ) {
+		
+		$linha = trim( $linha );
+
+                if( strlen($linha) <= 0 || $linha[0] == "#" )
+                        continue;
+	
+		$hosts[] = $linha;
+	}
+
+	return $hosts;
+}
+
+
+$parametros = getopt("r:h:v");
+
+if( !isset($parametros["r"] ) || !isset( $parametros["h"] ) ) {
+
+	mostrarAjuda();
+	exit(1);
+}
+
+if( !file_exists( $parametros["r"] ) || !file_exists( $parametros["h"] ) ) {
+
+	echo "Erro, arquivo não encontrado \n";
+	exit(1);
+}
+
+$arquivoHosts = file( $parametros["h"] );
+$arquivoRoteadores = file( $parametros["r"] );
+
+$hosts = formatarArquivoHosts( $arquivoHosts );
+$roteadores = formatarArquivoRoteadores( $arquivoRoteadores );
+
+if( count( $hosts ) <= 0 || count( $roteadores ) <= 0 ) {
+
+	echo "Erro, arquivo não formatado \n";
+	exit(1);
+}
+
+$codigoSaida = 0;
+
+foreach( $roteadores as $roteador ) {
+
+	$api = new routeros_api();
+       	$api->debug = ( isset( $parametros["v"] ) );
+
+       	$conectado = (boolean) $api->connect( $roteador["ip"], $roteador["usuario"], $roteador["senha"] );
+		
+	if( $conectado && limparWalledGarden( $api ) && addHostWalledGarden( $api, $hosts ) ) {
+		
+		echo $roteador[ "ip" ] . " Ok \n";  
+	}else{
+		echo $roteador[ "ip" ] . " Erro \n";	
+		
+		$codigoSaida++;
+	}
+}
+	
+exit( $codigoSaida );

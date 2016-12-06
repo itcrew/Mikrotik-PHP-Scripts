@@ -1,0 +1,4 @@
+# Arquivo com a lista de hosts que devem ser configurados no WG
+# 1 por linha
+*.apple.com
+www.prminformatica.com.br
