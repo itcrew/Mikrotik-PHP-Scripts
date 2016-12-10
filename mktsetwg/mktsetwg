@@ -132,7 +132,7 @@ $codigoSaida = 0;
 
 foreach( $roteadores as $roteador ) {
 
-	$api = new routeros_api();
+	$api = new RouterosAPI();
        	$api->debug = ( isset( $parametros["v"] ) );
 
        	$conectado = (boolean) $api->connect( $roteador["ip"], $roteador["usuario"], $roteador["senha"] );
