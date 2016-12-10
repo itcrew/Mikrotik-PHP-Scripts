@@ -1,0 +1,13 @@
+{
+	"name": "Mikrotik PHP Scripts",
+	
+	"description": "Scripts( CLI ) to automate tasks on mikrotik",
+        
+	"authors": [
+		{"name": "Paulo Dias"}
+        ],
+        
+	"require": {
+		"krok/routeros-api": "dev-master"
+	}
+}

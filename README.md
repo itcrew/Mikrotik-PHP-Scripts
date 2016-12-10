@@ -1,1 +1,4 @@
-Scripts to automate tasks on mikrotik
+Scripts( CLI ) to automate tasks on mikrotik
+
+Use like command in Linux Terminal
+

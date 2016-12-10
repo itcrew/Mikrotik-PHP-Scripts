@@ -1,7 +1,7 @@
 #!/usr/bin/php -q
 <?php
 
-require_once "../api/routeros_api.php";
+require_once "../vendor/autoload.php";
 
 function mostrarAjuda() {
 
